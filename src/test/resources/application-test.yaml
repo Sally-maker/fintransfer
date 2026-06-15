@@ -1,0 +1,8 @@
+spring:
+  jpa:
+    show-sql: false
+
+anthropic:
+  api-key: test-key
+  model: claude-haiku-4-5-20251001
+  base-url: https://api.anthropic.com

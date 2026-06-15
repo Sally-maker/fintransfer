@@ -1,0 +1,16 @@
+package com.gabriel.fintransfer.user.service;
+
+import com.gabriel.fintransfer.user.domain.User;
+import com.gabriel.fintransfer.user.dto.CreateUserRequest;
+import com.gabriel.fintransfer.user.dto.UserResponse;
+
+import java.util.UUID;
+
+public interface UserService {
+
+    UserResponse create(CreateUserRequest request);
+
+    UserResponse findById(UUID id);
+
+    User findEntityById(UUID id);
+}
