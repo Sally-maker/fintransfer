@@ -10,6 +10,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/api/v1/transactions")
 @RequiredArgsConstructor
@@ -23,5 +26,17 @@ public class TransactionController {
     @Operation(summary = "Transfer funds between users")
     public TransactionResponse transfer(@Valid @RequestBody TransferRequest request) {
         return transactionService.transfer(request);
+    }
+
+    @GetMapping("/user/{userId}")
+    @Operation(summary = "Get transaction history for a user")
+    public List<TransactionResponse> findByUserId(@PathVariable UUID userId) {
+        return transactionService.findByUserId(userId);
+    }
+
+    @PostMapping("/{transactionId}/refund")
+    @Operation(summary = "Refund a transaction (merchant only)")
+    public TransactionResponse refund(@PathVariable UUID transactionId, @RequestParam UUID merchantId) {
+        return transactionService.refund(transactionId, merchantId);
     }
 }

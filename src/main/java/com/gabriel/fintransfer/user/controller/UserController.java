@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -25,6 +26,12 @@ public class UserController {
     @Operation(summary = "Create a new user and their wallet")
     public UserResponse create(@Valid @RequestBody CreateUserRequest request) {
         return userService.create(request);
+    }
+
+    @GetMapping
+    @Operation(summary = "List all users")
+    public List<UserResponse> findAll() {
+        return userService.findAll();
     }
 
     @GetMapping("/{id}")

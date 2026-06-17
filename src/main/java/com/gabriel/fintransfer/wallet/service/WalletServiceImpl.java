@@ -38,4 +38,12 @@ public class WalletServiceImpl implements WalletService {
         return walletRepository.findById(walletId)
                 .orElseThrow(() -> new WalletNotFoundException(walletId.toString()));
     }
+
+    @Override
+    @Transactional
+    public Wallet deposit(UUID userId, BigDecimal amount) {
+        Wallet wallet = findByUserId(userId);
+        wallet.credit(amount);
+        return walletRepository.save(wallet);
+    }
 }
