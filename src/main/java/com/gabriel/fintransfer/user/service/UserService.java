@@ -15,5 +15,7 @@ public interface UserService {
 
     List<UserResponse> findAll();
 
+    UserResponse findByEmail(String email);
+
     User findEntityById(UUID id);
 }
