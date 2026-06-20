@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: fintransfer
+          POSTGRES_USER: fintransfer
+          POSTGRES_PASSWORD: fintransfer
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U fintransfer"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build and test
+        run: ./mvnw verify --batch-mode
+        env:
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/fintransfer
+          SPRING_DATASOURCE_USERNAME: fintransfer
+          SPRING_DATASOURCE_PASSWORD: fintransfer
+
+      - name: Build Docker image
+        run: docker build -t fintransfer:latest .
