@@ -1,6 +1,15 @@
 spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/fintransfer}
+    username: ${SPRING_DATASOURCE_USERNAME:fintransfer}
+    password: ${SPRING_DATASOURCE_PASSWORD:fintransfer}
+
   jpa:
     show-sql: false
+
+  flyway:
+    clean-disabled: false
+    baseline-on-migrate: false
 
 anthropic:
   api-key: test-key

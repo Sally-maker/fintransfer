@@ -1,7 +1,7 @@
 package com.gabriel.fintransfer.transaction.authorization;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 import com.gabriel.fintransfer.shared.exception.BusinessException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -17,11 +17,11 @@ public class ClaudeAuthorizationService implements TransactionAuthorizationServi
 
     private final RestClient restClient;
     private final String model;
-    private final ObjectMapper objectMapper;
+    private final JsonMapper jsonMapper;
 
-    public ClaudeAuthorizationService(AnthropicProperties properties, ObjectMapper objectMapper) {
+    public ClaudeAuthorizationService(AnthropicProperties properties, JsonMapper jsonMapper) {
         this.model = properties.model();
-        this.objectMapper = objectMapper;
+        this.jsonMapper = jsonMapper;
         this.restClient = RestClient.builder()
                 .baseUrl(properties.baseUrl())
                 .defaultHeader("x-api-key", properties.apiKey())
@@ -70,7 +70,7 @@ public class ClaudeAuthorizationService implements TransactionAuthorizationServi
                     .body(JsonNode.class);
 
             String text = response.path("content").get(0).path("text").asText();
-            JsonNode result = objectMapper.readTree(text.trim());
+            JsonNode result = jsonMapper.readTree(text.trim());
             boolean approved = result.path("approved").asBoolean();
             String reason = result.path("reason").asText("No reason provided");
             return new AuthorizationResult(approved, reason);

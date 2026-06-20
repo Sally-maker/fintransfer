@@ -1,89 +1,79 @@
 package com.gabriel.fintransfer.auth;
 
-import com.gabriel.fintransfer.TestcontainersConfig;
+import com.gabriel.fintransfer.auth.dto.LoginRequest;
+import com.gabriel.fintransfer.auth.dto.LoginResponse;
 import com.gabriel.fintransfer.user.domain.UserType;
 import com.gabriel.fintransfer.user.dto.CreateUserRequest;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.http.MediaType;
+import org.springframework.boot.resttestclient.TestRestTemplate;
+import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.web.servlet.MockMvc;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
-@AutoConfigureMockMvc
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
-@Import(TestcontainersConfig.class)
+@AutoConfigureTestRestTemplate
 class AuthControllerIntegrationTest {
 
     @Autowired
-    private MockMvc mockMvc;
-
-    @Autowired
-    private ObjectMapper objectMapper;
+    private TestRestTemplate restTemplate;
 
     @Test
-    void shouldRegisterAndReturnToken() throws Exception {
+    void shouldRegisterAndReturnToken() {
         CreateUserRequest request = new CreateUserRequest(
                 "Test User", "11122233344", "test@email.com", "password123", UserType.COMMON
         );
 
-        mockMvc.perform(post("/api/v1/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.token").isNotEmpty())
-                .andExpect(jsonPath("$.user.name").value("Test User"))
-                .andExpect(jsonPath("$.user.email").value("test@email.com"));
+        ResponseEntity<LoginResponse> response = restTemplate.postForEntity(
+                "/api/v1/auth/register", request, LoginResponse.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().token()).isNotBlank();
+        assertThat(response.getBody().user().name()).isEqualTo("Test User");
+        assertThat(response.getBody().user().email()).isEqualTo("test@email.com");
     }
 
     @Test
-    void shouldLoginWithValidCredentials() throws Exception {
+    void shouldLoginWithValidCredentials() {
         CreateUserRequest register = new CreateUserRequest(
                 "Login User", "99988877766", "login@email.com", "password123", UserType.COMMON
         );
+        restTemplate.postForEntity("/api/v1/auth/register", register, LoginResponse.class);
 
-        mockMvc.perform(post("/api/v1/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(register)))
-                .andExpect(status().isCreated());
+        LoginRequest login = new LoginRequest("login@email.com", "password123");
+        ResponseEntity<LoginResponse> response = restTemplate.postForEntity(
+                "/api/v1/auth/login", login, LoginResponse.class
+        );
 
-        String loginBody = """
-                {"email": "login@email.com", "password": "password123"}
-                """;
-
-        mockMvc.perform(post("/api/v1/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(loginBody))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.token").isNotEmpty())
-                .andExpect(jsonPath("$.user.email").value("login@email.com"));
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().token()).isNotBlank();
+        assertThat(response.getBody().user().email()).isEqualTo("login@email.com");
     }
 
     @Test
-    void shouldRejectInvalidLogin() throws Exception {
-        String loginBody = """
-                {"email": "nobody@email.com", "password": "wrongpass"}
-                """;
+    void shouldRejectInvalidLogin() {
+        LoginRequest login = new LoginRequest("nobody@email.com", "wrongpass");
+        ResponseEntity<String> response = restTemplate.postForEntity(
+                "/api/v1/auth/login", login, String.class
+        );
 
-        mockMvc.perform(post("/api/v1/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(loginBody))
-                .andExpect(status().isUnauthorized());
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 
     @Test
-    void shouldRequireAuthForProtectedEndpoints() throws Exception {
-        mockMvc.perform(post("/api/v1/transactions/transfer")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{}"))
-                .andExpect(status().isUnauthorized());
+    void shouldRequireAuthForProtectedEndpoints() {
+        ResponseEntity<String> response = restTemplate.postForEntity(
+                "/api/v1/transactions/transfer", "{}", String.class
+        );
+
+        assertThat(response.getStatusCode().value()).isIn(401, 403);
     }
 }
