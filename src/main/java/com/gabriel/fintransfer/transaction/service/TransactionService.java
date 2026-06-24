@@ -1,5 +1,6 @@
 package com.gabriel.fintransfer.transaction.service;
 
+import com.gabriel.fintransfer.transaction.dto.RefundRequest;
 import com.gabriel.fintransfer.transaction.dto.TransactionResponse;
 import com.gabriel.fintransfer.transaction.dto.TransferRequest;
 
@@ -12,5 +13,5 @@ public interface TransactionService {
 
     List<TransactionResponse> findByUserId(UUID userId);
 
-    TransactionResponse refund(UUID transactionId, UUID merchantId);
+    TransactionResponse refund(UUID transactionId, RefundRequest request);
 }

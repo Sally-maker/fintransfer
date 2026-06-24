@@ -36,6 +36,8 @@ public class TransactionExecutor {
         Transaction transaction = Transaction.builder()
                 .payer(payer)
                 .payee(payee)
+                .payerUser(payer.getUser())
+                .payeeUser(payee.getUser())
                 .amount(amount)
                 .status(TransactionStatus.COMPLETED)
                 .authorizationReason(authReason)

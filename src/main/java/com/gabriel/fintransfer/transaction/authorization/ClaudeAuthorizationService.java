@@ -43,10 +43,12 @@ public class ClaudeAuthorizationService implements TransactionAuthorizationServi
                 - Payer available balance: R$ %.2f
 
                 Rules:
-                - Deny if payer is MERCHANT
+                - Deny if payer is MERCHANT (merchants can only receive transfers)
                 - Deny if amount exceeds available balance
-                - Deny suspiciously large transfers (>95%% of balance in a round number)
-                - Otherwise approve standard transactions
+                - Deny if amount is above R$ 5000.00 (high value transfer limit)
+                - Deny if amount is below R$ 1.00 (suspicious micro-transaction)
+                - Deny if payer and payee are the same person
+                - Approve all other transactions
 
                 Response format (JSON only):
                 {"approved": true, "reason": "brief explanation"}
@@ -56,6 +58,42 @@ public class ClaudeAuthorizationService implements TransactionAuthorizationServi
                 ctx.amount(), ctx.payerBalance()
         );
 
+        return callClaude(prompt);
+    }
+
+    @Override
+    public AuthorizationResult authorizeRefund(RefundContext ctx) {
+        String prompt = """
+                You are a financial refund authorization system for FinTransfer.
+                Analyze the refund request below and respond with JSON ONLY — no explanation, no markdown.
+
+                Refund request:
+                - Requester: %s
+                - Recipient of original transfer: %s
+                - Amount: R$ %.2f
+                - Reason provided: %s
+                - Time since transaction: %d minutes
+
+                Rules:
+                - Approve if reason is valid (wrong recipient, duplicate transfer, incorrect amount, service not received)
+                - Deny if reason is vague or empty (e.g. "test", "no reason")
+                - Deny if transaction was made more than 7 days ago (10080 minutes)
+                - Approve all other valid refund requests
+
+                Response format (JSON only):
+                {"approved": true, "reason": "brief explanation"}
+                """.formatted(
+                ctx.requesterName(),
+                ctx.recipientName(),
+                ctx.amount(),
+                ctx.reason(),
+                ctx.minutesSinceTransaction()
+        );
+
+        return callClaude(prompt);
+    }
+
+    private AuthorizationResult callClaude(String prompt) {
         Map<String, Object> requestBody = Map.of(
                 "model", model,
                 "max_tokens", 150,
@@ -69,8 +107,9 @@ public class ClaudeAuthorizationService implements TransactionAuthorizationServi
                     .retrieve()
                     .body(JsonNode.class);
 
-            String text = response.path("content").get(0).path("text").asText();
-            JsonNode result = jsonMapper.readTree(text.trim());
+            String text = response.path("content").get(0).path("text").asText().trim();
+            text = text.replaceAll("(?s)```(?:json)?\\s*(.*?)\\s*```", "$1").trim();
+            JsonNode result = jsonMapper.readTree(text);
             boolean approved = result.path("approved").asBoolean();
             String reason = result.path("reason").asText("No reason provided");
             return new AuthorizationResult(approved, reason);

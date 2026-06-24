@@ -1,5 +1,6 @@
 package com.gabriel.fintransfer.transaction.domain;
 
+import com.gabriel.fintransfer.user.domain.User;
 import com.gabriel.fintransfer.wallet.domain.Wallet;
 import jakarta.persistence.*;
 import lombok.*;
@@ -35,6 +36,14 @@ public class Transaction {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private TransactionStatus status;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "payer_user_id")
+    private User payerUser;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "payee_user_id")
+    private User payeeUser;
 
     @Column(name = "authorization_reason", columnDefinition = "TEXT")
     private String authorizationReason;

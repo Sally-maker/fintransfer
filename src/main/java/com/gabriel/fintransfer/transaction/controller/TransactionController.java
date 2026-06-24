@@ -35,8 +35,8 @@ public class TransactionController {
     }
 
     @PostMapping("/{transactionId}/refund")
-    @Operation(summary = "Refund a transaction (merchant only)")
-    public TransactionResponse refund(@PathVariable UUID transactionId, @RequestParam UUID merchantId) {
-        return transactionService.refund(transactionId, merchantId);
+    @Operation(summary = "Request a refund for a transaction (payer only, analyzed by AI)")
+    public TransactionResponse refund(@PathVariable UUID transactionId, @Valid @RequestBody com.gabriel.fintransfer.transaction.dto.RefundRequest request) {
+        return transactionService.refund(transactionId, request);
     }
 }
