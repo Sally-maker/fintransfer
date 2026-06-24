@@ -9,9 +9,10 @@ Sistema que permite cadastro de usuários (comuns e lojistas), gerenciamento de 
 ### Regras de Negócio
 
 - **Usuário Comum** pode enviar e receber transferências
-- **Lojista** apenas recebe transferências e pode realizar estornos
+- **Lojista** apenas recebe transferências
 - Validação de saldo antes de cada transferência
 - Autorização de transações via API da Anthropic (Claude)
+- Estorno solicitado pelo pagador e analisado pela IA
 - Notificação ao recebedor após cada transferência
 
 ## Stack
@@ -77,7 +78,7 @@ src/main/java/com/gabriel/fintransfer/
 |---|---|---|
 | POST | `/api/v1/transactions/transfer` | Realizar transferência |
 | GET | `/api/v1/transactions/user/{userId}` | Histórico de transações |
-| POST | `/api/v1/transactions/{id}/refund?merchantId=` | Estorno (lojista) |
+| POST | `/api/v1/transactions/{id}/refund` | Solicitar estorno (pagador, analisado por IA) |
 
 ## Como Executar
 
