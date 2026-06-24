@@ -26,6 +26,7 @@ services:
       SPRING_DATASOURCE_USERNAME: fintransfer
       SPRING_DATASOURCE_PASSWORD: fintransfer
       JWT_SECRET: mude-essa-chave-secreta-em-producao-use-uma-longa
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
     depends_on:
       postgres:
         condition: service_healthy
